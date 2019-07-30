@@ -13,7 +13,7 @@ Inislization:
 ```Python
 link = 'mangalib.me' # Website's domen
 title = 'shingeki-no-kyojin' #unique name
-link = ''
+link = 'https://mangalib.me/shingeki-no-kyojin'
 manga1 = Manga.get(site,title)
 manga2 = Manga.get(link)
 
