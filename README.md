@@ -11,7 +11,7 @@ from getManga import Manga
 
 Inislization:
 ```Python
-link = 'mangalib.me' # Website's domen
+site = 'mangalib.me' # Website's domen
 title = 'shingeki-no-kyojin' #unique name
 link = 'https://mangalib.me/shingeki-no-kyojin'
 manga1 = Manga.get(site,title)
