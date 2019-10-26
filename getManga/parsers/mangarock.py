@@ -45,7 +45,6 @@ class MangaRockBook:
         self.title = title
         self.book_url = 'https://mangarock.com/manga/' + title #ненужная хуета на самом деле
         self.lang = 'ENG'
-        self.__api_request = api.get_info(title)
         self.last_vol = 'Unknown'
 
 

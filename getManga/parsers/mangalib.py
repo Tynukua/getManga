@@ -4,32 +4,69 @@ from base64 import b64decode
 from random import randint as ran
 from bs4 import BeautifulSoup
 import requests
+import aiohttp
+
+class MangaLibBaseApi:
+    def __init__(self, url = 'https://mangalib.me/'):
+        self._url = url
+    
+    def get_info(self, id):
+        api_request = requests.get(self._url + 'manga-short-info',
+            params = {'id', id}).json()
+        if 'slug' in api_request:
+            return api_request
+
+    async def aget_info(self, id):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self._url + 'manga-short-info',
+                params = {'id', id} ) as r:
+                api_request = await r.json()
+        if 'slug' in api_request:
+            return api_request
+    
+    def get_bs4(self, slug):
+        text = requests.get(self._url + slug).text
+        return BeautifulSoup(text, features="lxml")
+
+    async def aget_bs4(self, slug):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self._url + slug) as r:
+                text = await r.text()
+        return BeautifulSoup(text, features="lxml")
+
+api = MangaLibBaseApi()
 
 class MangaLibBook:
     def __init__(self, title):
-        if title.isdigit():
-            api_request =requests.get(
-                f'https://mangalib.me/manga-short-info?id={title}')
-            if 'slug' in api_request.json():
-                self.title = title
-                self.slug =  api_request.json()['slug']
-                self.book_url = 'http://mangalib.me/' + self.slug 
-
-                response = requests.get(self.book_url)
-                if not response.ok:
-                    raise Exception(f"Book '{title}' not exists") #MangaLibBookNotFound
-                self.html = BeautifulSoup(response.text, features="lxml")
-        else:  
-            self.slug = title
-            self.book_url = 'http://mangalib.me/' + title
-            response = requests.get(self.book_url)
-            if not response.ok:
-                raise Exception(f"Book '{title}' not exists") #MangaLibBookNotFound
-            else:
-                self.html = BeautifulSoup(response.text, features="lxml")
-                self.title = self.html.select_one(
-                    'div[data-post-id]').attrs['data-post-id']
         self.lang = 'RUS'
+        self.title = title
+        self.slug = None
+
+    def parse(self):
+        if self.title: 
+            self.__api_request = api.get_info(self.title)
+            self.html = api.get_bs4(self.__api_request['slug'])
+        else: 
+            self.html = api.get_bs4(self.slug)
+            self.title = self.html.select_one(
+                    'div[data-post-id]').attrs['data-post-id']
+            self.__api_request = api.get_info(self.title)
+        self.__parse()
+        return self
+
+    async def aparse(self):
+        if self.title: 
+            self.__api_request = api.get_info(self.title)
+            self.html = api.get_bs4(self.__api_request['slug'])
+        else: 
+            self.html = api.get_bs4(self.slug)
+            self.title = self.html.select_one(
+                    'div[data-post-id]').attrs['data-post-id']
+            self.__api_request = api.get_info(self.title)
+        self.__parse()
+        return self
+
+    def __parse(self):
         self.cover = self.html.select_one('img.manga__cover').attrs['src']
         
         chapter_list_tags = self.html.select('div[class="chapter-item"]')
@@ -86,6 +123,13 @@ class MangaLibBook:
     def by_link(self, link):
         title = re.search(r'mangalib.me/([0-z\-]*)', link).group(1)
         return MangaLibBook(title)
+    
+    @classmethod
+    def by_slug(self, slug):
+        self = MangaLibBook.__new__()
+        self.slug = slug 
+        self.title = None
+        return self
 
     def get_volume(self, vol):
         return MangaLibVol(self.slug, vol, self)
