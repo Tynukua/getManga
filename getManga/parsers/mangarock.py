@@ -1,49 +1,68 @@
 import json
 from requests import get
 import re
+import aiohttp
 
 
 API_URL = 'https://api.mangarockhd.com/query/web401/'
 
 class MangaRockException(Exception):
     pass
+
 class MangaRockAPI:
     def __init__(self, url):
         self.url = url
-            
-    
-    def get_info(self, oid):
-        r = get(self.url+'info', params = {'oid' : oid})
-        r_json = r.json()
+
+    def __data_return(self, r_json):
         if not r_json['code']:
             return r_json['data']
         else:
-            print(f"Wrong request: info '{oid}'")
-            return
+            raise MangaRockException(" MangaRock wrong request")   
 
+    def get_info(self, oid):
+        r = get(self.url+'info', params = {'oid' : oid})
+        return self.__data_return(r.json())
 
     def get_pages(self, oid):
         r = get(self.url+'pages', params = {'oid' : oid})
-        r_json = r.json()
-        if not r_json['code']:
-            return r_json['data']
-        else:
-            print(f"Wrong request: pages '{oid}'")
-            return
+        return self.__data_return( r.json())
 
+    async def aget_info(self, oid):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self.url+'info', params = {'oid' : oid}) as request:
+                return self.__data_return( await request.json()) 
+        
+    async def aget_pages(self, oid):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self.url+'pages', params = {'oid' : oid}) as request:
+                return self.__data_return( await request.json()) 
+            
 api = MangaRockAPI(API_URL)
 
 
 class MangaRockBook:
     def __init__(self, title):
-        self.__api_request = api.get_info(title)
         self.title = title
         self.book_url = 'https://mangarock.com/manga/' + title #ненужная хуета на самом деле
         self.lang = 'ENG'
+        self.__api_request = api.get_info(title)
+        self.last_vol = 'Unknown'
+
+
+    async def aparse(self):
+        self.__api_request = await api.aget_info(self.title)
+        self.__parse()
+        return self
+    
+    def parse(self):
+        self.__api_request = api.get_info(self.title)
+        self.__parse()
+        return self
+    
+    def __parse(self):
         self.name = self.__api_request.get('name')
         self.description = self.__api_request.get('description')
         self.cover = self.__api_request.get('cover')
-        self.last_vol = 'Unknown'
         self._chapters = self.__api_request.get('chapters')
         self.last_chapter = self._chapters[-1]['name']
 
@@ -101,6 +120,14 @@ class MangaRockVol:
         self.chapter_list = [i for i in manga.chapter_list if i[0] == self.vol]
         self.manga = manga
 
+    @property
+    async def aimg_list(self):
+        img_list = []
+        for _, oid, _ in self.chapter_list:
+            chapter = MangaRockChapter(self.manga, oid)
+            img_list += await chapter.aimg_list
+        return img_list
+
     @property 
     def img_list(self):
         img_list = []
@@ -119,6 +146,9 @@ class MangaRockChapter:
         else:
             raise MangaRockException('Unknown chapter')
 
+    @property
+    async def aimg_list(self):
+        return await api.aget_pages(self.oid)
 
     @property
     def img_list(self):

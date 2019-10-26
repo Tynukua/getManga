@@ -15,16 +15,23 @@ class Manga:
                 site = re.search(r'(\w+\.\w+)/?', link).group(1)
                 if not site in CLASS_DICT: 
                     raise Exception(f"Don\'t support this website '{site}'")
-                self.__manga = CLASS_DICT.get(site).by_link(link)
+                self.__link = link
+                self.__site = site
             else: 
                 raise Exception('Can\'t find a domen name in {link}')
         else:
             if not site in CLASS_DICT: 
                 raise Exception(f"Don\'t support this website '{site}'")
-            self.__manga = CLASS_DICT.get(site)(title)
+            self.__site = site
+            self.__title = title
         self.site = site
         #self.manga = self.__manga
-        
+
+    def parse(self):
+        if self.__site and self.__title:
+            self.__manga = CLASS_DICT.get(self.__site)(self.__title).parse()
+        elif self.__link:
+            self.__manga = CLASS_DICT.get(self.__site).by_link(self.__link).parse()
         self.info = {
             'title' : self.__manga.title,
             'name':self.__manga.name,
