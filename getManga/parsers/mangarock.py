@@ -63,6 +63,7 @@ class MangaRockBook:
         self.name = self.__api_request.get('name')
         self.description = self.__api_request.get('description')
         self.cover = self.__api_request.get('cover')
+        self.last_vol = 'Unknown'
         self._chapters = self.__api_request.get('chapters')
         self.last_chapter = self._chapters[-1]['name']
 
