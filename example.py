@@ -1,7 +1,7 @@
-import getManga
+import getmanga
 from pprint import pprint
 
-manga = getManga.Manga.get('mangalib.me','onepunchman')
+manga = getmanga.Manga.get('mangalib.me','onepunchman')
 
 pprint(manga.info)
 pprint(manga.chapter_dict)
