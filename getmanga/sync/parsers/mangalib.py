@@ -6,30 +6,19 @@ from bs4 import BeautifulSoup
 import requests
 import aiohttp
 
-win_info = re.compile(r'''window.__info = (.+)''')
-
 class MangaLibBaseApi:
     def __init__(self, url = 'https://mangalib.me/'):
         self._url = url
-
-    async def aget_info(self, id):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(self._url + 'manga-short-info',
-                params = {'id', id} ) as r:
-                api_request = await r.json()
+    
+    def get_info(self, id):
+        api_request = requests.get(self._url + 'manga-short-info',
+            params = {'id', id}).json()
         if 'slug' in api_request:
             return api_request
 
-    async def aget_bs4(self, slug):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(self._url + slug) as r:
-                text = await r.text()
+    def get_bs4(self, slug):
+        text = requests.get(self._url + slug).text
         return BeautifulSoup(text, features="lxml")
-    
-    def parse_window(self, html):
-        for tag in html.select('script'):
-            if 'window.__info ' in str(tag):
-                return json.loads(win_info.search(tag.get_text()).group())
 
 api = MangaLibBaseApi()
 
@@ -39,15 +28,15 @@ class MangaLibBook:
         self.title = title
         self.slug = None
 
-    async def parse(self):
+    def parse(self):
         if self.title: 
-            self.__api_request = await api.aget_info(self.title)
-            self.html = await api.aget_bs4(self.__api_request['slug'])
+            self.__api_request = api.get_info(self.title)
+            self.html = api.get_bs4(self.__api_request['slug'])
         else: 
-            self.html = await api.aget_bs4(self.slug)
+            self.html = api.get_bs4(self.slug)
             self.title = self.html.select_one(
                     'div[data-post-id]').attrs['data-post-id']
-            self.__api_request = await api.aget_info(self.title)
+            self.__api_request = api.get_info(self.title)
         self.__parse()
         return self
 
@@ -135,13 +124,13 @@ class MangaLibBook:
 
 class MangaLibVol:
     def __init__(self, title, vol, manga = None):
-        #print(f'v {title} {vol}')
+        print(f'v {title} {vol}')
         self.manga = MangaLibBook(title) if not manga else manga
         self.vol = vol
         self.title = title
         
     @property   
-    async def img_list(self):
+    def img_list(self):
         self.chapter_list_for_vol = list(
             self.manga.chapter_dict.get(self.vol).keys() )
         #self.chapter_list_for_vol.reverse()
@@ -149,28 +138,28 @@ class MangaLibVol:
         tmp_list = []
         for chapter in self.chapter_list_for_vol:
             chapter = MangaLibChapter(self.title, self.vol, chapter)
-            tmp_list+= await chapter.img_list
+            tmp_list+= chapter.img_list
         return tmp_list
     
  
 class MangaLibChapter:
     def __init__(self, title, vol, chapter):
-        #print(f'ch {title} {vol} {chapter}')
+        print(f'ch {title} {vol} {chapter}')
         self.chapter_url = f'https://mangalib.me/{title}/v{vol}/c{chapter}'
-        self.path = None
-        self._html = None
+        self.path = f'mangalib.me/manga/{title}/chapters/{vol}-{chapter}'
+        page = requests.get(self.chapter_url)
+        if not page.ok:
+            raise Exception(f"Chapter '{title}-{vol}-{chapter}' not exists") #MangaLibChapterNotFound
+        self.html = BeautifulSoup(page.text, features="lxml")
 
     @property
-    async def img_list(self):
-        if not self._html:
-            self._html = await api.aget_bs4(self.chapter_url)
-        if not self.path:
-            self.path = api.parse_window(self._html).get('imgUrl')
-        base_code = str(self._html.select_one('span.pp'))
+    def img_list(self):
+        #self.html = BeautifulSoup(download(self.chapter_url), features="lxml")
+        base_code = str(self.html.select_one('span.pp'))
         base_code = re.search(r'<span class="pp"><!-- ([\S\d=]*) -->',
             base_code).group(1)
         img_list = json.loads( b64decode(base_code))
-        return [f'https://img{ran(1,3)}.mangalib.me{self.path}'+i.get('u') 
+        return [f'https://img{ran(1,3)}.{self.path}/'+i.get('u') 
             for i in img_list]
-
+        
 
