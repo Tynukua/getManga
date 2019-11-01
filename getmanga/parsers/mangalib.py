@@ -1,4 +1,5 @@
 import re
+import asyncio
 import json
 from base64 import b64decode
 from random import randint as ran
@@ -6,7 +7,7 @@ from bs4 import BeautifulSoup
 import requests
 import aiohttp
 
-win_info = re.compile(r'''window.__info = (.+)''')
+win_info = re.compile(r'''window.__info = (.+);''')
 
 class MangaLibBaseApi:
     def __init__(self, url = 'https://mangalib.me/'):
@@ -15,21 +16,29 @@ class MangaLibBaseApi:
     async def aget_info(self, id):
         async with aiohttp.ClientSession() as session:
             async with session.get(self._url + 'manga-short-info',
-                params = {'id', id} ) as r:
-                api_request = await r.json()
+                params = {'id': id } ) as r:
+                try: api_request = await r.json()
+                except Exception: return 
         if 'slug' in api_request:
             return api_request
 
     async def aget_bs4(self, slug):
         async with aiohttp.ClientSession() as session:
-            async with session.get(self._url + slug) as r:
-                text = await r.text()
+            while 1:
+                async with session.get(self._url + slug) as r:
+                    if r.status == 200:
+                        text = await r.text()
+                        break
+                    else:
+                        print(r.status, self._url + slug)
+                        await asyncio.sleep(10)
+                        continue
         return BeautifulSoup(text, features="lxml")
     
     def parse_window(self, html):
         for tag in html.select('script'):
             if 'window.__info ' in str(tag):
-                return json.loads(win_info.search(tag.get_text()).group())
+                return json.loads(win_info.search(tag.get_text()).group(1))
 
 api = MangaLibBaseApi()
 
@@ -42,7 +51,13 @@ class MangaLibBook:
     async def parse(self):
         if self.title: 
             self.__api_request = await api.aget_info(self.title)
-            self.html = await api.aget_bs4(self.__api_request['slug'])
+            if self.__api_request:
+                self.html = await api.aget_bs4(self.__api_request['slug'])
+            else:
+                self.html = await api.aget_bs4(self.title)
+                self.title = self.html.select_one(
+                    'div[data-post-id]').attrs['data-post-id']
+                self.__api_request = await api.aget_info(self.title)
         else: 
             self.html = await api.aget_bs4(self.slug)
             self.title = self.html.select_one(
@@ -52,6 +67,7 @@ class MangaLibBook:
         return self
 
     def __parse(self):
+        self.slug = self.__api_request['slug']
         self.cover = self.html.select_one('img.manga__cover').attrs['src']
         
         chapter_list_tags = self.html.select('div[class="chapter-item"]')
@@ -155,8 +171,9 @@ class MangaLibVol:
  
 class MangaLibChapter:
     def __init__(self, title, vol, chapter):
-        #print(f'ch {title} {vol} {chapter}')
-        self.chapter_url = f'https://mangalib.me/{title}/v{vol}/c{chapter}'
+        print(f'ch {title} {vol} {chapter}')
+        self.chapter_url = f'{title}/v{vol}/c{chapter}'
+        print
         self.path = None
         self._html = None
 

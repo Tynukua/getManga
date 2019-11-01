@@ -1,10 +1,12 @@
 import getmanga
 from pprint import pprint
+from asyncio import get_event_loop, wait
 
-manga = getmanga.Manga.get('mangalib.me','onepunchman')
+async def main():
+    manga = await getmanga.Manga('https://mangalib.me/dr-stone').parse()
+    print(manga)
+    ch = manga.get_chapter(125)
+    print(len(await ch.img_list))
+loop = get_event_loop()
 
-pprint(manga.info)
-pprint(manga.chapter_dict)
-
-chapter = manga.get_chapter(1)
-volume = manga.get_volume(1)
+loop.run_until_complete(main())

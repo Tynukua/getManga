@@ -12,7 +12,7 @@ class MangaLibBaseApi:
     
     def get_info(self, id):
         api_request = requests.get(self._url + 'manga-short-info',
-            params = {'id', id}).json()
+            params = {'id': id}).json()
         if 'slug' in api_request:
             return api_request
 
