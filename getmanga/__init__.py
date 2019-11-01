@@ -50,6 +50,7 @@ class Manga:
         self.__dict__.update( self.info)
         self.chapter_list = self.__manga.chapter_list
         self.chapter_dict = self.__manga.chapter_dict
+        self.date_dict = self.__manga.date_dict
         return self
 
     @property

@@ -6,7 +6,7 @@ from random import randint as ran
 from bs4 import BeautifulSoup
 import requests
 import aiohttp
-
+from datetime import datetime
 win_info = re.compile(r'''window.__info = (.+);''')
 
 class MangaLibBaseApi:
@@ -119,6 +119,12 @@ class MangaLibBook:
             artist = None
         self.artist =  artist 
         print(f'book {self.title}')
+        
+        dates = [i.get_text() for i in self.html.select('div.chapter-item__date') ]
+        dates = [''.join(i.split()) for i in dates]
+        dates = [datetime.strptime(i ,"%d.%m.%Y") for i in dates]
+
+        self.date_dict = {chapter_list[i][1]:dates[i] for i in range(len(dates))}
     
     @classmethod
     def by_link(self, link):
