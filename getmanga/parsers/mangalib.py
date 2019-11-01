@@ -147,13 +147,13 @@ class MangaLibBook:
         return chapter
 
     @property
-    def img_list(self):
+    async def img_list(self):
         img_list = []
         vol_list = list(self.chapter_dict.keys())
         
         for vol in vol_list:
-            vol = MangaLibVol(self.title, vol, self)
-            img_list+= vol.img_list
+            vol = MangaLibVol(self.slug, vol, self)
+            img_list+= await  vol.img_list
         
         return img_list
 
@@ -166,9 +166,9 @@ class MangaLibVol:
         self.chapter_list_for_vol = list(
             self.manga.chapter_dict.get(self.vol).keys() )
         chapter = self.chapter_list_for_vol[0]
-        self.date = self.manga.data_dict.get(str(chapter) )
+        self.date = self.manga.date_dict.get(str(chapter) )
         for chapter in self.chapter_list_for_vol:
-            date = self.manga.data_dict.get(str(chapter) )
+            date = self.manga.date_dict.get(str(chapter) )
             if date > self.date:
                 self.date = date
 
@@ -199,7 +199,16 @@ class MangaLibChapter:
         base_code = re.search(r'<span class="pp"><!-- ([\S\d=]*) -->',
             base_code).group(1)
         img_list = json.loads( b64decode(base_code))
-        return [f'https://img{ran(1,3)}.mangalib.me{self.path}'+i.get('u') 
-            for i in img_list]
+        return [UpdateableLink(
+            f'https://img{{}}.mangalib.me{self.path}'+i.get('u')  )
+                for i in img_list]
 
 
+class UpdateableLink:
+    def __init__(self, link):
+        self.__link = link
+        self.__num = 0
+        
+    def __str__(self):
+        self.__num = (self.__num+1)%3 + 1
+        return self.__link.format( self.__num)
