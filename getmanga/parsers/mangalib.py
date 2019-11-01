@@ -142,7 +142,9 @@ class MangaLibBook:
         return MangaLibVol(self.slug, vol, self)
         
     def get_chapter(self,vol, chapter):
-        return MangaLibChapter(self.slug, vol, chapter)
+        chapter = MangaLibChapter(self.slug, vol, chapter)
+        chapter.date = self.date_dict.get(str(chapter))
+        return chapter
 
     @property
     def img_list(self):
@@ -161,13 +163,17 @@ class MangaLibVol:
         self.manga = MangaLibBook(title) if not manga else manga
         self.vol = vol
         self.title = title
-        
-    @property   
-    async def img_list(self):
         self.chapter_list_for_vol = list(
             self.manga.chapter_dict.get(self.vol).keys() )
-        #self.chapter_list_for_vol.reverse()
-        del self.manga
+        chapter = self.chapter_list_for_vol[0]
+        self.date = self.manga.data_dict.get(str(chapter) )
+        for chapter in self.chapter_list_for_vol:
+            date = self.manga.data_dict.get(str(chapter) )
+            if date > self.date:
+                self.date = date
+
+    @property   
+    async def img_list(self):
         tmp_list = []
         for chapter in self.chapter_list_for_vol:
             chapter = MangaLibChapter(self.title, self.vol, chapter)
