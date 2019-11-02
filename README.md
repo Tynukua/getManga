@@ -9,28 +9,33 @@ import main class:
 from getManga import Manga
 ```
 
-Inislization:
+
 ```Python
-site = 'mangalib.me' # Website's domen
-title = 'shingeki-no-kyojin' #unique name
-link = 'https://mangalib.me/shingeki-no-kyojin'
-manga1 = Manga.get(site,title)
-manga2 = Manga.get(link)
+async def main():
+    site = 'mangalib.me' # Website's domen
+    title = 'shingeki-no-kyojin' #unique name
+    link = 'https://mangalib.me/shingeki-no-kyojin'
+    # Inislization:
+    manga1 = await Manga.get(site,title).parse()
+    manga2 = await Manga.get(link).parse()
 
-```
 
-# Methods:
-```Python
-manga.info 				#some information about manga
-manga.img_list 				#return links for pages(take many time for work)
-manga.chapter_list			#return list of (volume_number, chapter_number, chapter_name)
-manga.chapter_dict			#return dict {volume_numbers: {chapter_numbers: chapter_name}}
+    # Methods:
 
-chapter = manga.get_chapter(int) 	#return chapter №int
-volume = manga.get_volume(int) 		#return volume №int
+    manga.info 				#some information about manga
+    manga.img_list 				#return links for pages(take many time for work)
+    manga.chapter_list			#return list of (volume_number, chapter_number, chapter_name)
+    manga.chapter_dict			#return dict {volume_numbers: {chapter_numbers: chapter_name}}
 
-chapter.img_list			#return links for pages from volume
-volume.img_list  			#return links for pages from volume
+    chapter = manga.get_chapter(int) 	#return chapter №int
+    volume = manga.get_volume(int) 		#return volume №int
 
+    await chapter.img_list			#return links for pages from volume
+    await volume.img_list  			#return links for pages from volume
+
+#Start parsing
+if __name__ == "__main__":
+    loop = get_event_loop()
+    loop.run_until_complete(main())
 ```
 

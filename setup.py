@@ -23,6 +23,4 @@ setuptools.setup(
         'aiohttp',
         'requests', 
         'beautifulsoup4']
-
-
-)
+    )

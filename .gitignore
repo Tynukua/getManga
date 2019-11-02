@@ -1,3 +1,6 @@
 __pycache__/
 *.pdf
-.gitignore
+
+build/
+dist
+*.egg-info/
