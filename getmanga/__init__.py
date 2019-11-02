@@ -1,7 +1,6 @@
 from .parsers import *
 import re
-from . import exceptions
-from .pdfer import ImgListPDF
+    
 
 CLASS_DICT = {
     'mangalib.me': mangalib.MangaLibBook,
@@ -14,15 +13,15 @@ class Manga:
             if re.search(r'(\w+\.\w+)/?', link):
                 site = re.search(r'(\w+\.\w+)/?', link).group(1)
                 if not site in CLASS_DICT: 
-                    raise Exception(f"Don\'t support this website '{site}'")
+                    raise UnknownWebsite(f"Don\'t support this website '{site}'")
                 self.__link = link
                 self.__site = site
                 self.__title = None
             else: 
-                raise Exception('Can\'t find a domen name in {link}')
+                raise UnknownWebsite(f'Can\'t find a domen name in {link}')
         else:
             if not site in CLASS_DICT: 
-                raise Exception(f"Don\'t support this website '{site}'")
+                raise UnknownWebsite(f"Don\'t support this website '{site}'")
             self.__site = site
             self.__title = title
         self.site = site
@@ -78,3 +77,6 @@ class Manga:
     @classmethod
     def get(self, site, title):
         return Manga(None,site,title)
+
+class UnknownWebsite(ValueError):
+    def __init__(self, text): pass
