@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from requests import get
 import re
 import aiohttp
@@ -17,15 +18,7 @@ class MangaRockAPI:
         if not r_json['code']:
             return r_json['data']
         else:
-            raise MangaRockException(" MangaRock wrong request")   
-
-    def get_info(self, oid):
-        r = get(self.url+'info', params = {'oid' : oid})
-        return self.__data_return(r.json())
-
-    def get_pages(self, oid):
-        r = get(self.url+'pages', params = {'oid' : oid})
-        return self.__data_return( r.json())
+            raise MangaRockException("MangaRock wrong request")   
 
     async def aget_info(self, oid):
         async with aiohttp.ClientSession() as session:
@@ -48,13 +41,8 @@ class MangaRockBook:
         self.last_vol = 'Unknown'
 
 
-    async def aparse(self):
+    async def parse(self):
         self.__api_request = await api.aget_info(self.title)
-        self.__parse()
-        return self
-    
-    def parse(self):
-        self.__api_request = api.get_info(self.title)
         self.__parse()
         return self
     
@@ -65,13 +53,16 @@ class MangaRockBook:
         self.last_vol = 'Unknown'
         self._chapters = self.__api_request.get('chapters')
         self.last_chapter = self._chapters[-1]['name']
-
+        self.date_dict = {}
         self.chapter_list = []
         for i in range(len(self._chapters)):
             part = str(i//5+1)
             oid = str(i)
             name = self._chapters[i].get('name')
             self.chapter_list.append((part, oid, name))
+            self.date_dict.update({oid:
+                datetime.fromtimestamp(
+                    self._chapters[i].get('updatedAt') )})
         
         self.chapter_dict = {}
         for part, oid, name in self.chapter_list:
@@ -118,24 +109,17 @@ class MangaRockVol:
         if not self.chapter_dict:
             raise MangaRockException('Volume not found')
         self.chapter_list = [i for i in manga.chapter_list if i[0] == self.vol]
+        self.date = max(manga.date_dict.items()) 
         self.manga = manga
 
     @property
-    async def aimg_list(self):
+    async def img_list(self):
         img_list = []
         for _, oid, _ in self.chapter_list:
             chapter = MangaRockChapter(self.manga, oid)
-            img_list += await chapter.aimg_list
+            img_list += await chapter.img_list
         return img_list
 
-    @property 
-    def img_list(self):
-        img_list = []
-        for _, oid, _ in self.chapter_list:
-            chapter = MangaRockChapter(self.manga, oid)
-            img_list += chapter.img_list
-        return img_list
-              
 
 class MangaRockChapter:
     def __init__(self, manga, chapter):
@@ -143,13 +127,10 @@ class MangaRockChapter:
             self.__chapter = manga._chapters[int(chapter)]
             self.name = self.__chapter.get('name')
             self.oid = self.__chapter.get('oid')
+            self.date = manga.date_dict.get(str(chapter))
         else:
             raise MangaRockException('Unknown chapter')
 
     @property
-    async def aimg_list(self):
+    async def img_list(self):
         return await api.aget_pages(self.oid)
-
-    @property
-    def img_list(self):
-        return api.get_pages(self.oid)

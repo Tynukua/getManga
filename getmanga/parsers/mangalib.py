@@ -165,12 +165,8 @@ class MangaLibVol:
         self.title = title
         self.chapter_list_for_vol = list(
             self.manga.chapter_dict.get(self.vol).keys() )
-        chapter = self.chapter_list_for_vol[0]
-        self.date = self.manga.date_dict.get(str(chapter) )
-        for chapter in self.chapter_list_for_vol:
-            date = self.manga.date_dict.get(str(chapter) )
-            if date > self.date:
-                self.date = date
+        self.date = max(self.manga.date_dict.items()) 
+
 
     @property   
     async def img_list(self):
