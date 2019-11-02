@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name = 'getmanga',
-    version="0.1",
+    version="0.1.2",
     author="Tynukua",
     author_email = 'tynuk.ua@gmail.com',
     description = 'package for load manga! :)',
