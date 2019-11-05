@@ -108,8 +108,8 @@ class MangaRockVol:
         self.chapter_dict = manga.chapter_dict.get(self.vol)
         if not self.chapter_dict:
             raise MangaRockException('Volume not found')
-        self.chapter_list = [i for i in manga.chapter_list if i[0] == self.vol]
-        self.date = max(manga.date_dict.items()) 
+        self.chapter_list = [i[1] for i in manga.chapter_list if i[0] == self.vol]
+        self.date = max([manga.date_dict.get(str(i)) for i in self.chapter_list])
         self.manga = manga
 
     @property
