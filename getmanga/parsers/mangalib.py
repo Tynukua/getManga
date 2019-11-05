@@ -123,6 +123,7 @@ class MangaLibBook:
         dates = [i.get_text() for i in self.html.select('div.chapter-item__date') ]
         dates = [''.join(i.split()) for i in dates]
         dates = [datetime.strptime(i ,"%d.%m.%Y") for i in dates]
+        dates.reverse()
 
         self.date_dict = {chapter_list[i][1]:dates[i] for i in range(len(dates))}
     
@@ -141,9 +142,9 @@ class MangaLibBook:
     def get_volume(self, vol):
         return MangaLibVol(self.slug, vol, self)
         
-    def get_chapter(self,vol, chapter):
-        chapter = MangaLibChapter(self.slug, vol, chapter)
-        chapter.date = self.date_dict.get(str(chapter))
+    def get_chapter(self,vol, chapter_num):
+        chapter = MangaLibChapter(self.slug, vol, chapter_num)
+        chapter.date = self.date_dict.get(str(chapter_num))
         return chapter
 
     @property
@@ -163,15 +164,18 @@ class MangaLibVol:
         self.manga = MangaLibBook(title) if not manga else manga
         self.vol = vol
         self.title = title
-        self.chapter_list_for_vol = list(
-            self.manga.chapter_dict.get(self.vol).keys() )
-        self.date = max(self.manga.date_dict.items()) 
+        self.chapter_list = list(
+            self.manga.chapter_dict.get(self.vol) )
+        self.date = max(
+            [self.manga.date_dict.get(i) 
+                for i in self.chapter_list]
+        ) 
 
 
     @property   
     async def img_list(self):
         tmp_list = []
-        for chapter in self.chapter_list_for_vol:
+        for chapter in self.chapter_list:
             chapter = MangaLibChapter(self.title, self.vol, chapter)
             tmp_list+= await chapter.img_list
         return tmp_list
@@ -181,7 +185,6 @@ class MangaLibChapter:
     def __init__(self, title, vol, chapter):
         print(f'ch {title} {vol} {chapter}')
         self.chapter_url = f'{title}/v{vol}/c{chapter}'
-        print
         self.path = None
         self._html = None
 
