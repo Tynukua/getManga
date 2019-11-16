@@ -52,6 +52,7 @@ class AsyncLoader:
                     part = await response.content.read(10**4)
                     while part:
                         tmp_file.write(part)
+                        part = await response.content.read(10**4)
                     break
                 else:
                     print(response.status)
