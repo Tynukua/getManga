@@ -12,7 +12,7 @@ class AsyncLoader:
         self.__loaded_imges = [None for _ in range(self.__imges_count)]
         self.path = path
         self.__callback_func = callback_func
-
+        os.makedirs(os.path.join(path, 'imges'))
     @property
     def status(self):
         loaded = self.__imges_count - self.__loaded_imges.count(None)
@@ -21,7 +21,7 @@ class AsyncLoader:
     async def load_by_index(self, index, session=None, status_info=False, reload=False):
         if not self.__loaded_imges[index] or reload:
             raw = await self.__load(index, session)
-            filename = os.path.join(self.path,'imges',f'{index}.jpg','wr')
+            filename = os.path.join(self.path,'imges',f'{index}.jpg')
             with open(filename, 'wb' ) as file:
                 file.write( raw.getvalue())
             self.__loaded_imges[index] = filename
@@ -68,5 +68,5 @@ class AsyncLoader:
     @classmethod
     async def __std_callback_func(self, status):
         done, all = status
-        print('%0.2f' % done/all*100)
+        print('%0.2f' % (done/all*100) )
         await asyncio.sleep(0)
