@@ -2,7 +2,7 @@ import asyncio
 import os
 from io import BytesIO
 from aiohttp import ClientSession
-from mridecoder import mri_decoder
+from .mridecoder import mri_decoder
 
 
 class AsyncLoader:
