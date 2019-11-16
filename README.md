@@ -16,8 +16,8 @@ async def main():
     title = 'shingeki-no-kyojin' #unique name
     link = 'https://mangalib.me/shingeki-no-kyojin'
     # Inislization:
-    manga1 = await Manga.get(site,title).parse()
-    manga2 = await Manga.get(link).parse()
+    manga = await Manga.get(site,title).parse()
+    manga2 = await Manga(link).parse()
 
 
     # Methods:
