@@ -43,9 +43,9 @@ class AsyncLoader:
 
 
     async def __load(self, index, session = None):
-        link =  str(self.__img_list[index])
+        link =  self.__img_list[index]
         raw = await self.__check_session(link, session)
-        if '.mri' in link[-4:]:
+        if '.mri' in str(link)[-4:]:
             raw = mri_decoder(raw)
         return raw
 
@@ -58,19 +58,25 @@ class AsyncLoader:
         return raw
 
     async def __get_image_value(self, link, session):
-        async with session.get(link) as response:
-            while 1:
-                if response.status ==200:
-                    tmp_file = BytesIO()
-                    part = await response.content.read(10**4)
-                    while part:
-                        tmp_file.write(part)
+        tmp = str(link)
+        while 1:
+            try:
+                async with session.get(tmp) as response:
+                    if response.status ==200:
+                        tmp_file = BytesIO()
                         part = await response.content.read(10**4)
-                    break
-                else:
-                    print(response.status)
-                    await asyncio.sleep(5)
-            return tmp_file
+                        while part:
+                            tmp_file.write(part)
+                            part = await response.content.read(10**4)
+                        break
+                    else:
+                        print(response.status, tmp)
+                        await asyncio.sleep(5)
+            except Exception as ex:
+                print(ex)
+                await asyncio.sleep(5)
+
+        return tmp_file
 
     async def __make_callback(self):
         if self.__callback_func:
