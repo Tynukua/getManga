@@ -16,6 +16,11 @@ class AsyncLoader:
             os.makedirs(os.path.join(path, 'imges'))
         except FileExistsError:
             pass
+
+    @property
+    def indexes(self):
+        return range(self.__imges_count)
+    
     @property
     def status(self):
         loaded = self.__imges_count - self.__loaded_imges.count(None)
