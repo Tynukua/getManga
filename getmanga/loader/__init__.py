@@ -21,6 +21,11 @@ class AsyncLoader:
         loaded = self.__imges_count - self.__loaded_imges.count(None)
         return (loaded, self.__imges_count)
 
+    async def wait(self):
+        while None in self.__loaded_imges:
+            await asyncio.sleep(0)
+        return self
+
     async def load_by_index(self, index, session=None, status_info=False, reload=False):
         if not self.__loaded_imges[index] or reload:
             raw = await self.__load(index, session)
