@@ -58,9 +58,9 @@ class AsyncLoader:
         return raw
 
     async def __get_image_value(self, link, session):
-        tmp = str(link)
         while 1:
             try:
+                tmp = str(link)
                 async with session.get(tmp) as response:
                     if response.status ==200:
                         tmp_file = BytesIO()
