@@ -62,8 +62,10 @@ class Manga:
         return
 
     @classmethod
-    def get(self, site, title):
-        self = Manga.__new__()
+    def get(cls, site, title):
+        if not site in CLASS_DICT:
+            raise UnknownWebsite(f"Don\'t support this website '{site}'")
+        self = cls.__new__(cls)
         self.__link = None
         self.__site = site
         self.__title = title
