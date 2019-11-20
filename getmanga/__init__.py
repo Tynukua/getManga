@@ -1,12 +1,6 @@
-from .parsers import *
 import re
+from .parsers import CLASS_DICT
     
-
-CLASS_DICT = {
-    'mangalib.me': mangalib.MangaLibBook,
-    'mangarock.com':mangarock.MangaRockBook}
-
-
 class Manga:
     def __init__(self, link = None, site = None, title = None):
         if not site and not title:
