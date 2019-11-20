@@ -1,5 +1,7 @@
 __pycache__/
 *.pdf
+tests/
+test.py
 
 build/
 dist

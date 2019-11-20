@@ -1,32 +1,18 @@
-from .parsers import *
 import re
-from . import exceptions
-from .pdfer import ImgListPDF
-
-CLASS_DICT = {
-    'mangalib.me': mangalib.MangaLibBook,
-    'mangarock.com':mangarock.MangaRockBook}
-
-
+from .parsers import CLASS_DICT
+    
 class Manga:
-    def __init__(self, link = None, site = None, title = None):
-        if not site and not title:
-            if re.search(r'(\w+\.\w+)/?', link):
+    def __init__(self, link):
+        if re.search(r'(\w+\.\w+)/?', link):
                 site = re.search(r'(\w+\.\w+)/?', link).group(1)
                 if not site in CLASS_DICT: 
-                    raise Exception(f"Don\'t support this website '{site}'")
+                    raise UnknownWebsite(f"Don\'t support this website '{site}'")
                 self.__link = link
                 self.__site = site
                 self.__title = None
-            else: 
-                raise Exception('Can\'t find a domen name in {link}')
-        else:
-            if not site in CLASS_DICT: 
-                raise Exception(f"Don\'t support this website '{site}'")
-            self.__site = site
-            self.__title = title
-        self.site = site
-        #self.manga = self.__manga
+        else: 
+            raise UnknownWebsite(f'Can\'t find a domen name in {link}')
+
 
     async def parse(self):
         if self.__site and self.__title:
@@ -76,5 +62,14 @@ class Manga:
         return
 
     @classmethod
-    def get(self, site, title):
-        return Manga(None,site,title)
+    def get(cls, site, title):
+        if not site in CLASS_DICT:
+            raise UnknownWebsite(f"Don\'t support this website '{site}'")
+        self = cls.__new__(cls)
+        self.__link = None
+        self.__site = site
+        self.__title = title
+        return self
+
+class UnknownWebsite(ValueError):
+    def __init__(self, text): pass
