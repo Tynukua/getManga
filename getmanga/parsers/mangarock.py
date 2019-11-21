@@ -115,7 +115,7 @@ class MangaRockVol:
     @property
     async def img_list(self):
         img_list = []
-        for _, oid, _ in self.chapter_list:
+        for oid in self.chapter_list:
             chapter = MangaRockChapter(self.manga, oid)
             img_list += await chapter.img_list
         return img_list
