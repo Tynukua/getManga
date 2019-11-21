@@ -18,7 +18,7 @@ class MangaToPDF:
         await self.__write()
         return self.path
 
-    def __write(self):
+    async def __write(self):
         async with aiofiles.open(self.path, 'wb') as f:
             await f.write(self.data) 
         del self.data      
