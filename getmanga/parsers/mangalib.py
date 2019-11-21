@@ -172,10 +172,14 @@ class MangaLibVol:
     @property   
     async def img_list(self):
         tmp_list = []
+        tasks = []
         for chapter in self.chapter_list:
-            chapter = MangaLibChapter(self.title, self.vol, chapter)
-            tmp_list+= await chapter.img_list
-        return tmp_list
+            tasks.append(MangaLibChapter(
+                self.title, self.vol, chapter).img_list )
+        tmp_list = await asyncio.gather(*tasks)
+        img_list = []
+        for i in tmp_list: img_list += i
+        return img_list
     
  
 class MangaLibChapter:
