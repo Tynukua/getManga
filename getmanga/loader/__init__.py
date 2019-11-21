@@ -16,6 +16,7 @@ class AsyncLoader:
             os.makedirs(os.path.join(path, 'imges'))
         except FileExistsError:
             pass
+        self.__loop = asyncio.get_running_loop()
 
     @property
     def indexes(self):
@@ -40,7 +41,8 @@ class AsyncLoader:
             raw = await self.__load(index, session)
             filename = os.path.join(self.path,'imges',f'{index}.jpg')
             with open(filename, 'wb' ) as file:
-                file.write( raw.getvalue())
+                await self.__loop.run_in_executor(None,
+                    file.write, raw.getvalue())
             self.__loaded_imges[index] = filename
 
             await self.__make_callback()
@@ -50,7 +52,8 @@ class AsyncLoader:
         link =  self.__img_list[index]
         raw = await self.__check_session(link, session)
         if '.mri' in str(link)[-4:]:
-            raw = mri_decoder(raw)
+            raw = await self.__loop.run_in_executor(None,
+                mri_decoder, raw)
         return raw
 
     async def __check_session(self, link, session = None):
