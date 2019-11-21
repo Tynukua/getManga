@@ -1,6 +1,7 @@
 import asyncio
 import os
 import img2pdf
+import aiofiles
 
 class MangaToPDF:
     def __init__(self, filename_list, path='./something',bookname='book.pdf'):
@@ -14,10 +15,10 @@ class MangaToPDF:
     async def make_book(self):
         loop = asyncio.get_running_loop()
         self.data = await loop.run_in_executor(None, img2pdf.convert, self.fl_list)
-        await loop.run_in_executor(None, self.__write, )
+        await self.__write()
         return self.path
 
     def __write(self):
-        with open(self.path,'wb') as f:
-            f.write(self.data) 
+        async with aiofiles.open(self.path, 'wb') as f:
+            await f.write(self.data) 
         del self.data      

@@ -22,5 +22,6 @@ setuptools.setup(
     install_requires=[
         'aiohttp',
         'requests', 
-        'beautifulsoup4']
+        'beautifulsoup4',
+        'aiofiles']
     )
