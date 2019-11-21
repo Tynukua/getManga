@@ -26,6 +26,10 @@ class AsyncLoader:
         loaded = self.__imges_count - self.__loaded_imges.count(None)
         return (loaded, self.__imges_count)
 
+    def get_imges_paths(self):
+        if not None in self.__loaded_imges:
+            return self.__loaded_imges
+            
     async def wait(self):
         while None in self.__loaded_imges:
             await asyncio.sleep(0)
