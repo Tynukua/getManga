@@ -39,7 +39,9 @@ class AsyncLoader:
         if not self.__loaded_imges[index] or reload:
             raw = await self.__load(index, session)
             link = str(self.__loaded_imges[index])
-            format = link.rsplit('/', 1)[-1].rsplit('.', 1)[-1]
+            format = link.rsplit('/', 1)[-1].rsplit('.', 1)[-1].split('?')[0]
+            #                       ^                ^                  ^
+            #           last part of path |   type of of file  | delete params from link
             filename = os.path.join(self.path,'imges',f'{index}.{format}')
             async with aiofiles.open(filename, 'wb' ) as file:
                 chunk = raw.read(1024)
