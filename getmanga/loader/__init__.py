@@ -2,7 +2,7 @@ import asyncio
 import os
 from io import BytesIO
 from aiohttp import ClientSession
-from .mridecoder import mri_decoder
+import aiofiles
 
 
 class AsyncLoader:
@@ -16,7 +16,6 @@ class AsyncLoader:
             os.makedirs(os.path.join(path, 'imges'))
         except FileExistsError:
             pass
-        self.__loop = asyncio.get_running_loop()
 
     @property
     def indexes(self):
@@ -33,27 +32,26 @@ class AsyncLoader:
             
     async def wait(self):
         while None in self.__loaded_imges:
-            await asyncio.sleep(0)
+            await asyncio.sleep(1)
         return self
 
     async def load_by_index(self, index, session=None, status_info=False, reload=False):
         if not self.__loaded_imges[index] or reload:
             raw = await self.__load(index, session)
-            filename = os.path.join(self.path,'imges',f'{index}.jpg')
-            with open(filename, 'wb' ) as file:
-                await self.__loop.run_in_executor(None,
-                    file.write, raw.getvalue())
+            link = str(self.__loaded_imges[index])
+            format = link.rsplit('/', 1)[-1].rsplit('.', 1)[-1]
+            filename = os.path.join(self.path,'imges',f'{index}.{format}')
+            async with aiofiles.open(filename, 'wb' ) as file:
+                chunk = raw.read(1024)
+                while chunk:
+                    await file.write(chunk)
+                    chunk = raw.read(1024)
             self.__loaded_imges[index] = filename
-
             await self.__make_callback()
-
 
     async def __load(self, index, session = None):
         link =  self.__img_list[index]
         raw = await self.__check_session(link, session)
-        if '.mri' in str(link)[-4:]:
-            raw = await self.__loop.run_in_executor(None,
-                mri_decoder, raw)
         return raw
 
     async def __check_session(self, link, session = None):
@@ -82,7 +80,6 @@ class AsyncLoader:
             except Exception as ex:
                 print(ex)
                 await asyncio.sleep(5)
-
         return tmp_file
 
     async def __make_callback(self):
@@ -94,5 +91,10 @@ class AsyncLoader:
     @classmethod
     async def __std_callback_func(self, status):
         done, all = status
-        print('%0.2f' % (done/all*100) )
+        loop = asyncio.get_running_loop()
+        if 'my_pool' in loop.__dict__:
+            pool = loop.my_pool
+        else:
+            pool = None
+        await loop.run_in_executor(pool, print, ('%0.2f' % (done/all*100) ) )
         await asyncio.sleep(0)
