@@ -1,6 +1,5 @@
 import asyncio
 import os
-from io import BytesIO
 from aiohttp import ClientSession
 import aiofiles
 
@@ -37,52 +36,41 @@ class AsyncLoader:
 
     async def load_by_index(self, index, session=None, status_info=False, reload=False):
         if not self.__loaded_imges[index] or reload:
-            raw = await self.__load(index, session)
-            link = str(self.__loaded_imges[index])
-            format = link.rsplit('/', 1)[-1].rsplit('.', 1)[-1].split('?')[0]
-            #                       ^                ^                  ^
-            #           last part of path |   type of of file  | delete params from link
-            filename = os.path.join(self.path,'imges',f'{index}.{format}')
-            async with aiofiles.open(filename, 'wb' ) as file:
-                chunk = raw.read(1024)
-                while chunk:
-                    await file.write(chunk)
-                    chunk = raw.read(1024)
-            self.__loaded_imges[index] = filename
+            self.__loaded_imges[index] = await self.__load(index, session)
             await self.__make_callback()
 
     async def __load(self, index, session = None):
-        link =  self.__img_list[index]
-        raw = await self.__check_session(link, session)
-        return raw
-
-    async def __check_session(self, link, session = None):
         if not session:
             async with ClientSession() as session:
-                raw = await self.__get_image_value(link, session)
+                filename = await self.__get_image_filename(index, session)
         else:
-            raw = await self.__get_image_value(link, session)
-        return raw
+            filename = await self.__get_image_filename(index, session)
+        return filename
 
-    async def __get_image_value(self, link, session):
+    async def __get_image_filename(self, index, session):
+        link = str(self.__img_list[index])
+        format = link.rsplit('/', 1)[-1].rsplit('.', 1)[-1].split('?')[0]
+        #                       ^                ^                  ^
+        #           last part of path |   type of of file  | delete params from link
+        filename = os.path.join(self.path,'imges',f'{index}.{format}')
         while 1:
             try:
-                tmp = str(link)
-                async with session.get(tmp) as response:
+                async with session.get(link) as response:
                     if response.status ==200:
-                        tmp_file = BytesIO()
-                        part = await response.content.read(10**4)
-                        while part:
-                            tmp_file.write(part)
-                            part = await response.content.read(10**4)
-                        break
+                        async with aiofiles.open(filename) as file:
+                            part = await response.content.read(10240)
+                            while part:
+                                await file.write(part)
+                                part = await response.content.read(10240)
+                            break
                     else:
-                        print(response.status, tmp)
+                        print(response.status, link)
                         await asyncio.sleep(5)
             except Exception as ex:
+                link = str(self.__img_list[index])
                 print(ex)
                 await asyncio.sleep(5)
-        return tmp_file
+        return filename
 
     async def __make_callback(self):
         if self.__callback_func:
