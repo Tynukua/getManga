@@ -66,10 +66,11 @@ class AsyncLoader:
                     else:
                         print(response.status, link)
                         await asyncio.sleep(5)
+                        link = str(self.__img_list[index])
             except Exception as ex:
-                link = str(self.__img_list[index])
                 print(ex)
                 await asyncio.sleep(5)
+            
         return filename
 
     async def __make_callback(self):
