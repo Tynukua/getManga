@@ -5,7 +5,7 @@ import aiofiles
 
 
 class AsyncLoader:
-    def __init__(self, img_list, path='./somefiles', callback_func=None):
+    def __init__(self, img_list, path='./somefiles', callback_func=None, pool= None):
         self.__img_list = list(img_list)
         self.__imges_count = len(self.__img_list)
         self.__loaded_imges = [None for _ in range(self.__imges_count)]
@@ -15,6 +15,7 @@ class AsyncLoader:
             os.makedirs(os.path.join(path, 'imges'))
         except FileExistsError:
             pass
+        self.__pool = pool
 
     @property
     def indexes(self):
@@ -70,7 +71,6 @@ class AsyncLoader:
             except Exception as ex:
                 print(ex)
                 await asyncio.sleep(5)
-            
         return filename
 
     async def __make_callback(self):
@@ -80,12 +80,8 @@ class AsyncLoader:
             await AsyncLoader.__std_callback_func(self.status)
 
     @classmethod
-    async def __std_callback_func(self, status):
+    async def __std_callback_func(cls, status):
         done, all = status
         loop = asyncio.get_running_loop()
-        if 'my_pool' in loop.__dict__:
-            pool = loop.my_pool
-        else:
-            pool = None
-        await loop.run_in_executor(pool, print, ('%0.2f' % (done/all*100) ) )
+        await loop.run_in_executor(None, print, ('%0.2f' % (done/all*100) ) )
         await asyncio.sleep(0)
