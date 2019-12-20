@@ -13,7 +13,17 @@ class Manga:
         else: 
             raise UnknownWebsite(f'Can\'t find a domen name in {link}')
 
-
+        self.title = None
+        self.name = None
+        self.cover = None
+        self.description = None
+        self.lang = None
+        self.rating = None
+        self.last_chapter = None
+        self.last_volume = None
+        self.author = None
+        self.artist = None
+        
     async def parse(self):
         if self.__site and self.__title:
             manga = CLASS_DICT.get(self.__site)(self.__title)
