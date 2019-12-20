@@ -83,5 +83,5 @@ class AsyncLoader:
     async def __std_callback_func(cls, status):
         done, all = status
         loop = asyncio.get_running_loop()
-        await loop.run_in_executor(None, print, ('%0.2f' % (done/all*100) ) )
+        await loop.run_in_executor(None, print, ('\rLoading: %0.2f' % (done/all*100) ) )
         await asyncio.sleep(0)
