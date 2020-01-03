@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name = 'getmanga',
-    version="0.1.5",
+    version="0.1.6",
     author="Tynukua",
     author_email = 'tynuk.ua@gmail.com',
     description = 'package for load manga! :)',
@@ -22,5 +22,6 @@ setuptools.setup(
     install_requires=[
         'aiohttp',
         'requests', 
-        'beautifulsoup4']
+        'beautifulsoup4',
+        'aiofiles']
     )

@@ -30,7 +30,7 @@ class MangaLibBaseApi:
                         text = await r.text()
                         break
                     else:
-                        print(r.status, self._url + slug)
+                        
                         await asyncio.sleep(10)
                         continue
         return BeautifulSoup(text, features="lxml")
@@ -118,7 +118,6 @@ class MangaLibBook:
                 break
             artist = None
         self.artist =  artist 
-        print(f'book {self.title}')
         
         dates = [i.get_text() for i in self.html.select('div.chapter-item__date') ]
         dates = [''.join(i.split()) for i in dates]
@@ -151,7 +150,6 @@ class MangaLibBook:
     async def img_list(self):
         img_list = []
         vol_list = list(self.chapter_dict.keys())
-        
         for vol in vol_list:
             vol = MangaLibVol(self.slug, vol, self)
             img_list+= await  vol.img_list
@@ -160,7 +158,6 @@ class MangaLibBook:
 
 class MangaLibVol:
     def __init__(self, title, vol, manga = None):
-        #print(f'v {title} {vol}')
         self.manga = MangaLibBook(title) if not manga else manga
         self.vol = vol
         self.title = title
@@ -175,15 +172,18 @@ class MangaLibVol:
     @property   
     async def img_list(self):
         tmp_list = []
+        tasks = []
         for chapter in self.chapter_list:
-            chapter = MangaLibChapter(self.title, self.vol, chapter)
-            tmp_list+= await chapter.img_list
-        return tmp_list
+            tasks.append(MangaLibChapter(
+                self.title, self.vol, chapter).img_list )
+        tmp_list = await asyncio.gather(*tasks)
+        img_list = []
+        for i in tmp_list: img_list += i
+        return img_list
     
  
 class MangaLibChapter:
     def __init__(self, title, vol, chapter):
-        print(f'ch {title} {vol} {chapter}')
         self.chapter_url = f'{title}/v{vol}/c{chapter}'
         self.path = None
         self._html = None
