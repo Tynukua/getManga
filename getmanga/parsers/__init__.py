@@ -1,7 +1,12 @@
-from . import (mangalib, 
-                mangarock)
+from typing import Dict
+
+from .abcparser import ParserABC
+from .readmanga import ReadManga
 
 
-CLASS_DICT = {
-    'mangalib.me': mangalib.MangaLibBook,
-    'mangarock.com':mangarock.MangaRockBook}
+PARSERS: Dict[str,ParserABC] = {
+        'readmanga.live': ReadManga,
+        'mintmanga.live': ReadManga,
+}
+
+
