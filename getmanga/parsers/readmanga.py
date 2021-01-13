@@ -20,7 +20,7 @@ class ReadManga(ParserABC):
             return match.group(1)
 
     async def parse_info(self):
-        async with ClientSession as session:
+        async with ClientSession() as session:
             domain = self._manga._domain
             _id = self._manga._id
             async with session.get(f'https://{domain}/{_id}') as resp:
@@ -58,7 +58,7 @@ class ReadManga(ParserABC):
     def __furl(self, vol, ch):
         return 'https://{domain}/{manga_id}/vol{vol}/{ch}?mtr=1'.format(
                 domain = self._manga._domain,
-                manga_id=self._manga.id,
+                manga_id=self._manga._id,
                 vol=vol,
                 ch=ch
              )
@@ -76,7 +76,7 @@ class ReadManga(ParserABC):
             if not vol is None and not ch is None:
                 async with session.get(self.__furl(vol,ch)) as resp:
                     text = await resp.text()
-                return __parse_images(text)
+                return self.__parse_images(text)
             elif not vol is None and ch is None:
                 urls=[self.__furl(vol,ch) for ch in self._manga.contents[vol]]
             elif vol is None and ch is None:
@@ -91,26 +91,28 @@ class ReadManga(ParserABC):
             imgs = []
             loop = asyncio.get_running_loop()
             for _,ss in urls:
+                ss.seek(0)
                 sb = await loop.run_in_executor(None,ss.read,None)
-                imgs += __parse_images(sb)
+                ss.close()
+                imgs += self.__parse_images(sb)
             return imgs
 
             
     
-def __parse_images( text):
-    selector = Selector(text= text)
-    for script in selector.css('script').getall():
-        if 'init' in script: break
-    else:
-        raise ValueError("Script not found")
-    match = scriptparser.search(script)
-    if not match:
-        raise ValueError("Script not parsed")
-    fargs = match.group(1)
-    fargs = '[' + fargs.replace("'", '"') + ']'
-    imgs_splited = json.loads(fargs)[0]
-    imgs = [ ''.join(i[:3]) for i in imgs_splited]
-    return imgs
+    def __parse_images(self, text):
+        selector = Selector(text= text)
+        for script in selector.css('script').getall():
+            if 'init' in script: break
+        else:
+            raise ValueError("Script not found")
+        match = scriptparser.search(script)
+        if not match:
+            raise ValueError("Script not parsed")
+        fargs = match.group(1)
+        fargs = '[' + fargs.replace("'", '"').strip() + ']'
+        imgs_splited = json.loads(fargs)[0]
+        imgs = [ ''.join(i[:3]) for i in imgs_splited]
+        return imgs
 
 
 

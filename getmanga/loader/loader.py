@@ -25,19 +25,14 @@ class AsyncLoader:
                 url = url[:100] + '...'
             raise ValueError(f"[{resp.status}] GET {url}")
         stream = pair[1]
-        method = resp.read
         if isinstance(stream, io.TextIOBase):
-            method = resp.text
-        elif isinstance(stream,io.BufferedIOBase): 
-            method = resp.read
-
-        while part:=await method(1024):
-            if isinstance(stream, AsyncBase):
-                await stream.write(part)
-            else:
-                loop = asyncio.get_running_loop()
-                await loop.run_in_executor(None,stream.write,part)
-        await resp.close()
+            part = await resp.text()
+        if isinstance(stream, AsyncBase):
+            await stream.write(part)
+        else:
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(None,stream.write,part)
+        resp.close()
 
     def put(self,items: list):
         for i in items:
